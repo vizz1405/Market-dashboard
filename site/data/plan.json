@@ -1,0 +1,21 @@
+{
+  "budget": "S$500 a month on POEMS, from December 2026",
+  "rules": [
+    {"title": "Buy every month", "text": "New money goes in each month whatever the trend says."},
+    {"title": "Trend rules decide exits only", "text": "US holdings follow the S&P 500 dual rule. SGX holdings follow the STI 10-month average. China A holdings follow the Shanghai 10-month average. Signals are read on month-end closes."},
+    {"title": "Exit means all cash", "text": "When a market's rule flips from in to out at a month end, sell holdings there and keep SGD cash on POEMS until it flips back in."},
+    {"title": "Take profit", "text": "Up 30% or more and analyst upside under 10% (or Morningstar 1-2 stars): sell half and reinvest."},
+    {"title": "Replace a loser", "text": "Down 25%, below its 200-day average and cut to hold: replace it."}
+  ],
+  "rotation": [
+    {"month": "2026-12", "buy": "MSFT, AMZN, YUMC", "note": "S$170 / S$170 / S$160"},
+    {"month": "2027-01", "buy": "DBS"},
+    {"month": "2027-02", "buy": "GOOGL, AVGO"},
+    {"month": "2027-03", "buy": "SCHW plus savings"},
+    {"month": "2027-04", "buy": "China Merchants Bank (100-share lot)"},
+    {"month": "2027-05", "buy": "A17U (CapitaLand Ascendas REIT)"},
+    {"month": "2027-06", "buy": "Save"},
+    {"month": "2027-07", "buy": "Ping An (100-share lot)"}
+  ],
+  "fees": "POEMS Cash Plus: US 0 commission with fractional shares; SGX 0.08% with no minimum; China A 0.12% with a CNH60 minimum and 100-share lots; dividend fee 1%, minimum S$1."
+}

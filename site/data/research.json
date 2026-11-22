@@ -1,0 +1,93 @@
+{
+  "as_of": "2026-11-20",
+  "written": "2026-11-21",
+  "note": "Educational analysis, not personal advice. Fair values, scenarios and targets are estimates. Prices are Nov 20, 2026 US closes.",
+  "source_doc": "https://claude.ai/artifact/KqQ8NmQGAqMbq77cYV593u",
+  "disclosure": "Written by Claude, made by Anthropic. Amazon is a large Anthropic shareholder and that stake is part of the Amazon math.",
+  "tickers": [
+    {
+      "ticker": "MSFT", "name": "Microsoft", "exchange": "NASDAQ", "yahoo": "MSFT", "price": 484.52, "currency": "USD",
+      "plan": "December buy, S$170 (about 0.27 shares)",
+      "why": [
+        {"label": "Retail chatter", "text": "Reddit's most-discussed stock on Oct 9 and Oct 27, tone bearish both times. By Nov 21 it had left WallStreetBets' top 20 as attention moved to AI chips and the Anthropic listing."},
+        {"label": "Catalyst", "text": "Fiscal Q1 (reported Oct 28) beat: revenue $92.3B (+19%), EPS $4.92 (+32%), Azure +48%. Then capex of $45.2B with $50B+ guided, a Nov 12-13 Outlook/Teams/Copilot outage and the Nov 19-20 AI sell-off took it 12.8% off its $555.80 record."},
+        {"label": "Analysts", "text": "17+ firms raised targets on Oct 29 (Wells Fargo $750, Bernstein $722, Citi $680). UBS, TD Cowen, RBC and Mizuho reiterated Buy into the drop; no downgrades. Mean target $636."}
+      ],
+      "one_line": "Moving because of the AI-capex sell-off and a bad outage week, but free cash flow down 23% while capex heads past $50B a quarter is the part no one is talking about.",
+      "snapshot": [
+        {"label": "Price · Market cap · 30-day", "value": "$484.52 · $3.60T · -6.8%", "vs": "S&P 500 -9.8% over the same 30 days"},
+        {"label": "Forward P/E · EV/sales", "value": "20.0x FY28 · 10.6x", "vs": "Big-tech and software peers about 13x forward, 5.8x EV/sales"},
+        {"label": "Last quarter growth", "value": "Revenue +18.8% · EPS +32%", "vs": "Consensus FY27 revenue growth 19%"},
+        {"label": "Cash vs debt · Shares", "value": "$64.3B vs $57.2B · -0.1% YoY", "vs": "No dilution; net debt tiny for its size"}
+      ],
+      "fair_value": 577, "fair_math": "26x FY28 EPS $24.20 = $629, discounted one year at 9% = ~$577. Cross-check 28x FY27 EPS $20.01 = $560. Trades about 16% below fair value.",
+      "street_target": 636,
+      "scenarios": [
+        {"name": "Bear", "horizon": "3-6 months", "math": "20x x FY27 low EPS $19.55", "price": 390},
+        {"name": "Base", "horizon": "6-12 months", "math": "24x x FY28 EPS $24.20", "price": 580},
+        {"name": "Bull", "horizon": "12-18 months", "math": "28x x FY28 high EPS $25.85", "price": 725},
+        {"name": "Stretched", "horizon": "24 months", "math": "32x x FY29 EPS ~$29.50", "price": 945}
+      ],
+      "entry": [440, 490], "trims": [[580, 580], [720, 750]], "stop": 390,
+      "stop_text": "Weekly close below $390, or Azure growth under 30% for two quarters in a row.",
+      "entry_text": "200-day average $442, support about $478.",
+      "trim_text": "A quarter at $580, another quarter at $720-750."
+    },
+    {
+      "ticker": "AMZN", "name": "Amazon", "exchange": "NASDAQ", "yahoo": "AMZN", "price": 246.82, "currency": "USD",
+      "plan": "December buy, S$170 (about 0.53 shares)",
+      "why": [
+        {"label": "Retail chatter", "text": "A top-20 WallStreetBets ticker (92 mentions in the 24 hours to Nov 21), sentiment neutral. The crowd now trades it as the listed proxy for Anthropic, so it fell with Anthropic's shares on Nov 20."},
+        {"label": "Catalyst", "text": "Q3 (Oct 29): revenue $201.9B (+12%), EPS $1.89 vs $1.96 expected, but AWS $46.0B (+39%) at a record 13.9% margin. Capex $77.3B (+120%), 2026 near $220B; trailing free cash flow -$42.4B. Fell 4.1% to $246.82 on Nov 20."},
+        {"label": "Analysts", "text": "Split after Q3: Cantor, Citizens, Morgan Stanley, Wedbush and Scotiabank cut; UBS, Mizuho and Freedom raised. Oppenheimer to $310 (Anthropic stake ~$25/share). Mean target $327."}
+      ],
+      "one_line": "Moving because of AWS re-accelerating and the Anthropic listing, but free cash flow of -$42B with even bigger 2027 capex is the part no one is talking about.",
+      "snapshot": [
+        {"label": "Price · Market cap · 30-day", "value": "$246.82 · $2.67T · -1.4%", "vs": "S&P 500 -9.8%; 52-week range $199-284"},
+        {"label": "Forward P/E · EV/sales", "value": "23.2x 2027 · 3.6x", "vs": "Between retail (Walmart 40x, Costco 44x) and Alphabet 17x"},
+        {"label": "Last quarter growth", "value": "Revenue +12.1% · EPS -3%", "vs": "Operating income +61%; last year had Anthropic gains"},
+        {"label": "Cash vs debt · Shares", "value": "$114.2B vs $173.1B · +1.4% YoY", "vs": "Only one of the three with net debt and dilution"}
+      ],
+      "fair_value": 276, "fair_math": "Core 24x 2027 EPS $10.66 = $256, plus Anthropic stake ~$29/share haircut 30% = $20. Total ~$276, about 10% below fair value; a third of the gap rides on Anthropic's price.",
+      "street_target": 327,
+      "scenarios": [
+        {"name": "Bear", "horizon": "3-6 months", "math": "19x x $10.66 + $10 stake", "price": 213},
+        {"name": "Base", "horizon": "6-12 months", "math": "25x x $10.66 + $20 stake", "price": 287},
+        {"name": "Bull", "horizon": "12-18 months", "math": "29x x $12.95 + $25 stake", "price": 400},
+        {"name": "Stretched", "horizon": "24 months", "math": "32x x 2028 EPS ~$15 + $37 stake", "price": 517}
+      ],
+      "entry": [225, 250], "trims": [[285, 310], [375, 400]], "stop": 199,
+      "stop_text": "Weekly close below $199 (52-week low), or AWS growth under 25%.",
+      "entry_text": "200-day average $245, so today's price sits right on it.",
+      "trim_text": "A quarter at $285-310, another quarter at $375-400."
+    },
+    {
+      "ticker": "YUMC", "name": "Yum China", "exchange": "NYSE", "yahoo": "YUMC", "price": 49.81, "currency": "USD",
+      "plan": "December buy, S$160 (about 2.49 shares, US listing for fractions)",
+      "why": [
+        {"label": "Retail chatter", "text": "Almost no US retail chatter; not in WallStreetBets' top 20. Chinese platforms (Xiaohongshu, Weibo) were not checked, so the retail picture is unknown."},
+        {"label": "Catalyst", "text": "Q3 (Nov 3): revenue $3,477M (+8%, +2% ex-currency), same-store sales -3%, transactions +3% for a 15th quarter, EPS $0.91 (+20%). Record 692 net new stores, $1B more buyback, ~100% of free cash flow returned from 2027."},
+        {"label": "Analysts", "text": "Strong Buy from 19-21 analysts, mean target $62 (range $56-77). Last named change: Goldman to $59 around August; nothing after Q3."}
+      ],
+      "one_line": "Moving because of buybacks and record store openings, but a 5% fall in KFC's average ticket, traffic bought with cheaper meals, is the part no one is talking about.",
+      "snapshot": [
+        {"label": "Price · Market cap · 30-day", "value": "$49.81 · $16.7B · +11.3%", "vs": "52-week range $39.93-56.90"},
+        {"label": "Forward P/E · EV/sales", "value": "14.7x 2027 · 1.5x", "vs": "Global restaurant peers about 22x forward, 5.7x EV/sales"},
+        {"label": "Last quarter growth", "value": "Revenue +8.3% · EPS +20%", "vs": "Same-store sales -3%; operating margin 13.0%"},
+        {"label": "Cash vs debt · Shares", "value": "$1.67B vs $1.55B · -8.5% YoY", "vs": "Returning about 9% of its market cap in 2026"}
+      ],
+      "fair_value": 55, "fair_math": "18x 2027 EPS $3.39 = $61, discounted one year at 10% = ~$55. Cash cross-check: ~$1B FCF at a 5.5% yield = $54/share. About 10% below fair value.",
+      "street_target": 62,
+      "scenarios": [
+        {"name": "Bear", "horizon": "3-6 months", "math": "12x x 2027 low EPS $3.10", "price": 37},
+        {"name": "Base", "horizon": "6-12 months", "math": "16x x 2027 EPS $3.39", "price": 54},
+        {"name": "Bull", "horizon": "12-18 months", "math": "18x x 2028 EPS ~$3.90", "price": 70},
+        {"name": "Stretched", "horizon": "24 months", "math": "21x x 2028 EPS ~$4.10", "price": 86}
+      ],
+      "entry": [44, 50], "trims": [[58, 62], [70, 70]], "stop": 39.9,
+      "stop_text": "Weekly close below $39.90 (52-week low), or same-store sales still negative in Q1 2027.",
+      "entry_text": "200-day average $46.50; you are buying near the top of the zone after an 11% run.",
+      "trim_text": "A quarter at $58-62, another quarter at $70."
+    }
+  ]
+}
