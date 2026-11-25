@@ -240,3 +240,22 @@ details.more[open] summary { margin-bottom: 8px; }
   .rb { font-size: 13px; }
   .rb-h, .rb-r { grid-template-columns: minmax(0, 1.4fr) 1fr 1fr; gap: 8px; }
 }
+
+/* watchlist */
+.pill.stage { color: var(--blue); background: color-mix(in srgb, var(--blue) 12%, transparent); }
+.pill.wait { color: var(--text2); background: var(--fill); }
+.wl { padding-top: 6px; padding-bottom: 6px; }
+.wl-r { display: grid; grid-template-columns: minmax(0, 1.5fr) 110px 110px minmax(0, 1fr) 190px; gap: 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line); color: inherit; }
+.wl-r:first-child { border-top: 0; }
+.wl-r:hover .wl-n b { color: var(--blue); }
+.wl-n { min-width: 0; } .wl-n b { display: block; font-size: 16px; } .wl-n span { display: block; font-size: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wl-s .spark { margin: 0; height: 30px; }
+.wl-p { font-weight: 600; text-align: right; } .wl-p span { display: block; font-size: 12px; font-weight: 500; }
+.wl-g .gap { height: 6px; border-radius: 3px; background: var(--fill); margin-top: 6px; overflow: hidden; } .wl-g .gap i { display: block; height: 100%; border-radius: 3px; background: var(--blue); }
+.wl-f { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+@media (max-width: 900px) { .wl-r { grid-template-columns: minmax(0, 1.4fr) 90px minmax(0, 1fr) auto; } .wl-s { display: none; } }
+@media (max-width: 700px) {
+  .wl-r { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
+  .wl-g { grid-column: 1 / 3; order: 4; } .wl-f { grid-column: 1 / 3; justify-content: flex-start; order: 5; } .wl-p { order: 2; }
+  .tabs a span { font-size: 10px; }
+}

@@ -1,0 +1,202 @@
+{
+ "as_of_analyst": "2026-11-24",
+ "source": "Daily review thread, levels set 24 Nov 2026",
+ "rules": {
+  "good_entry": "Daily close above entry_trigger (200-day avg); crypto names also need BTC-USD above its 200-day avg",
+  "stage_in": "NVDA and SPCX only: may buy small monthly amounts below trigger if analyst upside >= 25%",
+  "trim": "Up >=30% from cost and analyst upside <10%, or price >40% above 200-day avg",
+  "exit": "Month-end close below 10-month avg after having been above it, or 25% below cost"
+ },
+ "tickers": [
+  {
+   "ticker": "NVDA",
+   "name": "NVIDIA",
+   "group": "AI chips",
+   "crypto": false,
+   "benchmark": false,
+   "stage_in": true,
+   "analyst_upside_pct": 57.5,
+   "rating": 1.67742
+  },
+  {
+   "ticker": "SPCX",
+   "name": "SpaceX",
+   "group": "Space (IPO Jun 2026)",
+   "crypto": false,
+   "benchmark": false,
+   "stage_in": true,
+   "analyst_upside_pct": 103.7,
+   "rating": 1.68293
+  },
+  {
+   "ticker": "BTC-USD",
+   "name": "Bitcoin",
+   "group": "Benchmark",
+   "crypto": false,
+   "benchmark": true,
+   "stage_in": false,
+   "analyst_upside_pct": null,
+   "rating": null
+  },
+  {
+   "ticker": "MSTR",
+   "name": "Strategy (MicroStrategy)",
+   "group": "Bitcoin treasury",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": 200.8,
+   "rating": 1.25
+  },
+  {
+   "ticker": "COIN",
+   "name": "Coinbase",
+   "group": "Exchange",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": 87.4,
+   "rating": 1.97297
+  },
+  {
+   "ticker": "HOOD",
+   "name": "Robinhood",
+   "group": "Broker/exchange",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": 90.4,
+   "rating": 1.75
+  },
+  {
+   "ticker": "CRCL",
+   "name": "Circle",
+   "group": "Stablecoin issuer",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": 113.5,
+   "rating": 2.17241
+  },
+  {
+   "ticker": "MARA",
+   "name": "MARA Holdings",
+   "group": "Miner",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": 191.4,
+   "rating": 2.13333
+  },
+  {
+   "ticker": "RIOT",
+   "name": "Riot Platforms",
+   "group": "Miner",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": 99.0,
+   "rating": 1.36364
+  },
+  {
+   "ticker": "CLSK",
+   "name": "CleanSpark",
+   "group": "Miner",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": 308.0,
+   "rating": 1.33333
+  },
+  {
+   "ticker": "IREN",
+   "name": "IREN",
+   "group": "Miner/AI hosting",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": 307.3,
+   "rating": 1.55
+  },
+  {
+   "ticker": "CIFR",
+   "name": "Cipher Mining",
+   "group": "Miner/AI hosting",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": 314.2,
+   "rating": 1.45455
+  },
+  {
+   "ticker": "HUT",
+   "name": "Hut 8",
+   "group": "Miner/AI hosting",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": 164.7,
+   "rating": 1.34783
+  },
+  {
+   "ticker": "CORZ",
+   "name": "Core Scientific",
+   "group": "Miner/AI hosting",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": 147.8,
+   "rating": 1.31818
+  },
+  {
+   "ticker": "GLXY",
+   "name": "Galaxy Digital",
+   "group": "Crypto bank/miner",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": 194.9,
+   "rating": 1.4375
+  },
+  {
+   "ticker": "BMNR",
+   "name": "BitMine Immersion",
+   "group": "Ether treasury",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": 243.7,
+   "rating": 1.0
+  },
+  {
+   "ticker": "IBIT",
+   "name": "iShares Bitcoin Trust",
+   "group": "Bitcoin ETF",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": null,
+   "rating": null
+  },
+  {
+   "ticker": "FBTC",
+   "name": "Fidelity Wise Origin Bitcoin",
+   "group": "Bitcoin ETF",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": null,
+   "rating": null
+  },
+  {
+   "ticker": "ETHA",
+   "name": "iShares Ethereum Trust",
+   "group": "Ether ETF",
+   "crypto": true,
+   "benchmark": false,
+   "stage_in": false,
+   "analyst_upside_pct": null,
+   "rating": null
+  }
+ ]
+}

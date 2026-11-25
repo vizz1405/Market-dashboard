@@ -130,12 +130,12 @@
         }],
         draw: [(u) => {
           const ctx = u.ctx, { left, width } = u.bbox;
-          hlines.forEach((l) => {
+          hlines.forEach((l, li) => {
             const y = u.valToPos(l.y, "y", true);
             ctx.save(); ctx.strokeStyle = l.color; ctx.lineWidth = 1.5 * devicePixelRatio; ctx.setLineDash([5 * devicePixelRatio, 4 * devicePixelRatio]);
             ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + width, y); ctx.stroke();
             ctx.setLineDash([]); ctx.fillStyle = l.color; ctx.font = `600 ${11 * devicePixelRatio}px -apple-system, Helvetica, Arial`;
-            ctx.textAlign = "right"; ctx.fillText(l.label, left + width - 4 * devicePixelRatio, y - 5 * devicePixelRatio); ctx.restore();
+            ctx.textAlign = "right"; ctx.fillText(l.label, left + width - 4 * devicePixelRatio, li % 2 ? y + 14 * devicePixelRatio : y - 5 * devicePixelRatio); ctx.restore();
           });
         }],
       },
@@ -173,6 +173,17 @@
         <p class="sub">${p.gap >= 0 ? `${pc(p.gap, 1, false)} above the line.` : `${pc(Math.abs(p.gap), 1, false)} below the line.`} ${p.signal ? (p.gap >= 0 ? "A close under it moves these holdings to cash." : "") : (p.gap < 0 ? "A close over it means hold again." : "")}</p>
       </a>`).join("") + `</div>`;
     h += `<h2>Alerts</h2><div class="card">` + (o.alerts.length ? o.alerts.map((a) => `<div class="alert ${a.level}"><i></i><div><b>${esc(a.title)}</b><p>${esc(a.body)}</p></div></div>`).join("") : `<p class="sub">Nothing close to a flip.</p>`) + `</div>`;
+    if (o.watch) {
+      const w = o.watch;
+      h += `<h2>Watchlist</h2><a class="card link" href="#/watch"><div class="card-h"><div><h3>${w.entry.length ? `${w.entry.length} at a good entry` : "Nothing at a good entry yet"}</h3>
+        <p class="sub">NVIDIA, SpaceX and 16 crypto-linked names</p></div>${w.btc_ok ? `<span class="pill in">Bitcoin above average</span>` : `<span class="pill out">Bitcoin below average</span>`}</div>
+        ${keys([
+          w.entry.length ? `Good entry now: <b>${w.entry.join(", ")}</b>.` : `No name is above its entry line today.`,
+          w.stage.length ? `Small monthly buys allowed while below the line: <b>${w.stage.join(", ")}</b> (analysts see 25%+ upside).` : "",
+          w.btc ? (w.btc_ok ? `Bitcoin is above its 200-day average, so crypto entries are switched on.` : `Crypto entries wait for bitcoin to clear its 200-day average of <b>$${n0(w.btc.trigger)}</b>, ${pc(w.btc.gap, 0, false)} above today.`) : "",
+          w.closest.length ? `Closest crypto names to an entry: ${w.closest.map((c) => `${c.ticker} (${pc(c.gap, 0, false)} away)`).join(", ")}.` : "",
+        ].filter(Boolean))}</a>`;
+    }
     h += `<h2>Markets</h2><div class="grid g4">` + o.markets.map((m) => `
       <a class="card link" href="#/market/${m.key}">
         <div class="tile-top"><span class="tile-name">${esc(m.name)}</span></div>
@@ -416,6 +427,71 @@
     return s + "</svg>";
   }
 
+  // ---------- watchlist ----------
+  const wPill = (w) => w.status === "Entry" ? `<span class="pill in">Good entry</span>` : w.status === "Stage in" ? `<span class="pill stage">Small buys OK</span>`
+    : w.status === "Above" ? `<span class="pill in">Above average</span>` : w.status === "Below" ? `<span class="pill out">Below average</span>` : `<span class="pill wait">Wait</span>`;
+  const gapBar = (g) => { const v = Math.max(0, Math.min(1, 1 - g / 1)); return `<div class="gap"><i style="width:${(v * 100).toFixed(0)}%"></i></div>`; };
+  async function viewWatch() {
+    const w = await load("watchlist.json");
+    const btc = w.tickers.find((t) => t.benchmark), rest = w.tickers.filter((t) => !t.benchmark);
+    const entry = rest.filter((t) => t.status === "Entry"), exits = rest.filter((t) => t.exit_flag);
+    let h = `<section class="hero"><p class="eyebrow">Closes to ${dmy(rest[0].as_of)} · analyst views as of ${dmy(w.as_of_analyst)}</p><h1>Watchlist</h1>
+      <p class="lede">${entry.length ? `<b>${entry.map((t) => t.ticker).join(", ")}</b> ${entry.length > 1 ? "are" : "is"} at a good entry.` : `<b>Nothing is at a good entry yet.</b>`}
+      ${btc && !btc.status.startsWith("Above") ? ` Bitcoin is ${pc(1 - btc.last / btc.trigger, 0, false)} below its 200-day average, and crypto names wait until it gets back above.` : ""}</p></section>`;
+    if (btc) h += `<a class="card link" href="#/watch/BTC-USD"><div class="card-h"><div><h3>Bitcoin gate</h3><p class="sub">Crypto entries switch on only while bitcoin is above its 200-day average</p></div>${wPill(btc)}</div>
+      <div class="grid g2" style="align-items:center"><div><div class="big num">$${n0(btc.last)}</div><p class="sub">Line: <b class="num">$${n0(btc.trigger)}</b> · ${pc(btc.from_high, 0)} from its 1-year high</p>${meter(btc.last / btc.trigger - 1)}</div>
+      <div>${spark(btc.c.slice(-250), btc.c[btc.c.length - 1] >= btc.c[btc.c.length - 250])}</div></div></a>`;
+    const groups = [["AI and space", rest.filter((t) => !t.crypto)], ["Bitcoin and ether funds", rest.filter((t) => /ETF/.test(t.group))],
+      ["Exchanges, brokers and treasuries", rest.filter((t) => t.crypto && !/ETF|Miner|miner/.test(t.group))], ["Miners and AI hosting", rest.filter((t) => /Miner|miner/.test(t.group))]];
+    groups.forEach(([title, list]) => {
+      if (!list.length) return;
+      h += `<h2>${title}</h2><div class="card wl">` + list.map((t) => `<a class="wl-r" href="#/watch/${t.ticker}">
+        <div class="wl-n"><b>${t.ticker}</b><span>${esc(t.name)}</span></div>
+        <div class="wl-s">${spark(t.c.slice(-130), t.c[t.c.length - 1] >= t.c[Math.max(0, t.c.length - 130)])}</div>
+        <div class="wl-p num">$${nf(t.last)}<span class="${cls(t.chg30)}">${pc(t.chg30, 0)} 30d</span></div>
+        <div class="wl-g">${t.status === "Entry" ? `<span class="small pos">Above line</span>` : `<span class="small muted">${pc(t.pct_to_trigger, 0, false)} to entry</span>`}${gapBar(Math.max(0, t.pct_to_trigger))}</div>
+        <div class="wl-f">${wPill(t)}${t.exit_flag ? `<span class="chip">Exit ${my(t.exit_month)}</span>` : ""}${t.trim_flag ? `<span class="chip">Trim</span>` : ""}</div></a>`).join("") + `</div>`;
+    });
+    h += `<h2>How the flags work</h2><div class="card">${keys([
+      `<b>Good entry:</b> the daily close is above the 200-day average (50-day for SpaceX, which listed in June). Crypto names also need bitcoin above its own 200-day average.`,
+      `<b>Small buys OK:</b> NVIDIA and SpaceX only. Small monthly amounts are fine below the line while analysts see 25% or more upside.`,
+      `<b>Trim:</b> up 30% or more from your cost with analyst upside under 10%, or the price more than 40% above its 200-day average. The dashboard flags the 40% stretch; the cost test needs your buy price.`,
+      `<b>Exit:</b> a month-end close below the 10-month average after being above it, or 25% below your cost.`,
+      exits.length ? `${exits.length} names gave that exit signal at the end of October (${exits.map((t) => t.ticker).join(", ")}). It only matters if you hold them.` : "",
+      `POEMS may ask for a knowledge assessment before you can buy bitcoin and ether ETFs such as IBIT.`,
+    ].filter(Boolean))}</div>`;
+    return h;
+  }
+  async function viewWatchTicker(tk) {
+    const w = await load("watchlist.json");
+    const t = w.tickers.find((x) => x.ticker === tk); if (!t) return viewWatch();
+    const above = t.last >= t.trigger, isBtc = t.benchmark, cur = isBtc ? "$" : "$";
+    let h = `<a class="back" href="#/watch">‹ Watchlist</a><section class="hero"><p class="eyebrow">${esc(t.group)}${t.crypto ? " · crypto" : ""}</p><h1>${esc(t.name)}</h1>
+      <p class="lede"><b>${cur}${nf(t.last)}</b> on ${dmy(t.as_of)}, ${pc(Math.abs(t.last / t.trigger - 1), 1, false)} ${above ? "above" : "below"} its ${esc(t.trigger_basis)} of ${cur}${nf(t.trigger)}.</p></section>`;
+    h += `<div class="card"><div class="card-h"><div><h3>Last 12 months</h3><p class="sub">Daily close with the entry line (${esc(t.trigger_basis)})</p></div>${wPill(t)}</div>
+      <div class="chart" id="c-w"></div>
+      <div class="legend"><span><i class="ln" style="background:var(--blue)"></i>Close</span><span><i class="ln" style="background:var(--orange2)"></i>${esc(t.trigger_basis)}</span>${t.ten_month_avg ? `<span><i class="ln" style="background:var(--gray)"></i>10-month average</span>` : ""}</div>
+      ${keys([
+        isBtc ? (above ? `Bitcoin is above its 200-day average, so crypto names can flag a good entry.` : `Bitcoin needs to close above <b>$${n0(t.trigger)}</b> (${pc(t.pct_to_trigger, 0, false)} higher) before crypto names can flag an entry.`)
+          : t.status === "Entry" ? `<b>Good entry.</b> The close is above the entry line${t.crypto ? " and bitcoin is above its average" : ""}.`
+          : t.status === "Stage in" ? `Below the line, but analysts see ${t.analyst_upside_pct.toFixed(0)}% upside, so small monthly buys are allowed under the plan.`
+          : `<b>Wait.</b> It needs to rise ${pc(t.pct_to_trigger, 0, false)} to reach the entry line${t.crypto && !w.btc_ok ? ", and bitcoin needs to clear its own average too" : ""}.`,
+        t.ten_month_avg ? `10-month average: <b>${cur}${nf(t.ten_month_avg)}</b>. A month-end close below it after being above is the exit signal.${t.exit_flag ? ` That happened at the end of ${my(t.exit_month)}.` : ""}` : `Too new for a 10-month average; the 50-day line stands in for entries.`,
+        t.trim_flag ? `<b>Trim flag:</b> more than 40% above its average.` : `Trim flag at ${cur}${nf(t.trigger * 1.4)} (40% above the average).`,
+        `${pc(t.from_high, 0)} from its 1-year high; ${pc(t.chg30, 0)} over 30 days.`,
+        t.analyst_upside_pct != null ? `Analysts' average target was ${t.analyst_upside_pct.toFixed(0)}% above the price on ${dmy(w.as_of_analyst)} (rating ${t.rating.toFixed(1)} on a 1 = strong buy to 5 = sell scale).` : "",
+      ].filter(Boolean))}</div>`;
+    h += `<p class="small muted" style="margin-top:20px">Educational, not advice. Levels follow the watchlist rules set in the daily review and recompute every morning.</p>`;
+    setTimeout(() => {
+      const hl = [{ y: t.trigger, label: `Entry line ${cur}${nf(t.trigger)}`, color: css("--orange2") }];
+      if (t.ten_month_avg) hl.push({ y: t.ten_month_avg, label: "10-month avg", color: css("--gray") });
+      const u = lineChart(document.getElementById("c-w"), { t: t.t, height: 300, hlines: hl,
+        series: [{ label: "Close", data: t.c, color: css("--blue") }, { label: t.trigger_basis, data: t.ma, color: css("--orange2"), width: 1.3 }] });
+      const v = t.c.concat([t.trigger]); u.setScale("y", { min: Math.min(...v) * 0.95, max: Math.max(...v) * 1.04 });
+    });
+    return h;
+  }
+
   async function viewPlan() {
     const [p, o] = await Promise.all([load("plan.json"), load("overview.json")]);
     const ym = new Date().toISOString().slice(0, 7);
@@ -437,7 +513,7 @@
   async function route() {
     destroyCharts();
     const parts = (location.hash.replace(/^#\/?/, "") || "today").split("/");
-    const tab = { market: "markets", research: "research", plan: "plan", markets: "markets" }[parts[0]] || "today";
+    const tab = { market: "markets", research: "research", plan: "plan", markets: "markets", watch: "watch" }[parts[0]] || "today";
     document.querySelectorAll(".tabs a").forEach((a) => a.classList.toggle("on", a.dataset.tab === tab));
     try {
       let html;
@@ -446,6 +522,8 @@
       else if (parts[0] === "research" && parts[1]) html = await viewTicker(parts[1]);
       else if (parts[0] === "research") html = await viewResearch();
       else if (parts[0] === "plan") html = await viewPlan();
+      else if (parts[0] === "watch" && parts[1]) html = await viewWatchTicker(decodeURIComponent(parts[1]));
+      else if (parts[0] === "watch") html = await viewWatch();
       else html = await viewToday();
       $app.innerHTML = html;
     } catch (e) {

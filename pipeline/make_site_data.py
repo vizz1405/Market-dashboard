@@ -239,6 +239,83 @@ for key, name in FUNDS:
     w = s.resample("W").last().dropna()
     funds.append(dict(key=key, **f, t=[int(i.timestamp()) for i in w.index], c=[round(float(v), 4) for v in w.values]))
 
+# ---------- watchlist: NVDA, SPCX, crypto names (levels and rules from the daily review) ----------
+WCFG = json.load(open(os.path.join(HERE, "watchlist.json")))
+wd = os.path.join(D, "watch")
+
+
+def wl_state(x, btc_ok, cfg):
+    """Flags for one ticker on the closes in x (rules as set in the daily review, 24 Nov 2026)."""
+    n = 200 if len(x) >= 200 else 50
+    trig = float(x.rolling(n).mean().iloc[-1])
+    last = float(x.iloc[-1])
+    m = x.resample("ME").last()
+    m10 = m.rolling(10).mean()
+    ten = None if np.isnan(m10.iloc[-1]) else float(m10.iloc[-1])
+    above = last > trig
+    up = cfg.get("analyst_upside_pct")
+    if cfg["benchmark"]:
+        status = "Above" if above else "Below"
+    elif above and (btc_ok or not cfg["crypto"]):
+        status = "Entry"
+    elif cfg["stage_in"] and up is not None and up >= 25:
+        status = "Stage in"
+    else:
+        status = "Wait"
+    # exit: last completed month-end close fell below its 10-month average after being above it
+    done = m.iloc[:-1] if x.index[-1] < m.index[-1] - pd.Timedelta(days=3) else m
+    d10 = done.rolling(10).mean()
+    exit_flag = bool(len(done) > 11 and done.iloc[-1] < d10.iloc[-1] and done.iloc[-2] > d10.iloc[-2])
+    trim_flag = bool(last > trig * 1.4)
+    exit_month = str(done.index[-1].date()) if exit_flag else None
+    return dict(exit_month=exit_month, last=last, trigger=trig, trigger_basis=f"{n}-day average", pct_to_trigger=trig / last - 1,
+                ten_month_avg=ten, status=status, exit_flag=exit_flag, trim_flag=trim_flag)
+
+
+watch = []
+btc = pd.read_csv(os.path.join(wd, "BTC-USD.csv"), index_col=0, parse_dates=True)["close"].dropna() if os.path.exists(os.path.join(wd, "BTC-USD.csv")) else None
+btc_ok_now = bool(btc is not None and btc.iloc[-1] > btc.rolling(200).mean().iloc[-1])
+btc_ok_prev = bool(btc is not None and btc.iloc[-2] > btc.rolling(200).mean().iloc[-2])
+for cfg in WCFG["tickers"]:
+    f = os.path.join(wd, cfg["ticker"] + ".csv")
+    if not os.path.exists(f):
+        continue
+    x = pd.read_csv(f, index_col=0, parse_dates=True)["close"].dropna()
+    st = wl_state(x, btc_ok_now, cfg)
+    prev = wl_state(x.iloc[:-1], btc_ok_prev, cfg)
+    n = 200 if len(x) >= 200 else 50
+    y = x[x.index >= x.index[-1] - pd.Timedelta(days=380)]
+    ma = x.rolling(n).mean().reindex(y.index)
+    ago = x[x.index <= x.index[-1] - pd.Timedelta(days=30)]
+    hi = float(x[x.index >= x.index[-1] - pd.Timedelta(days=365)].max())
+    row = dict(cfg, **st, as_of=str(x.index[-1].date()), prev_status=prev["status"], chg30=float(x.iloc[-1] / ago.iloc[-1] - 1) if len(ago) else None,
+               from_high=float(x.iloc[-1] / hi - 1), t=[int(i.timestamp()) for i in y.index], c=[round(float(v), 4) for v in y.values],
+               ma=[None if np.isnan(v) else round(float(v), 4) for v in ma.values])
+    watch.append(row)
+    if cfg["benchmark"]:
+        if btc_ok_now != btc_ok_prev:
+            alerts.append(dict(level="high", market="Bitcoin", title=f"Bitcoin crossed {'above' if btc_ok_now else 'below'} its 200-day average",
+                               body="Crypto names " + ("can now flag entries." if btc_ok_now else "go back to waiting.")))
+        continue
+    if st["status"] == "Entry" and prev["status"] != "Entry":
+        alerts.append(dict(level="high", market=cfg["name"], title=f"{cfg['ticker']} hit a good entry",
+                           body=f"Closed {fmt(st['last'])}, above its {st['trigger_basis']} of {fmt(st['trigger'])}."))
+    if st["status"] != "Entry" and prev["status"] == "Entry":
+        alerts.append(dict(level="medium", market=cfg["name"], title=f"{cfg['ticker']} dropped out of its entry",
+                           body=f"Closed {fmt(st['last'])}, below its {st['trigger_basis']} of {fmt(st['trigger'])}."))
+    if st["exit_flag"] and not prev["exit_flag"]:
+        alerts.append(dict(level="high", market=cfg["name"], title=f"{cfg['ticker']} exit signal",
+                           body="Its month-end close fell below the 10-month average. Sell if you hold it."))
+    if st["trim_flag"] and not prev["trim_flag"]:
+        alerts.append(dict(level="medium", market=cfg["name"], title=f"{cfg['ticker']} is over 40% above its average",
+                           body="Trim level from the watchlist rules. Consider taking some profit if you hold it."))
+alerts.sort(key=lambda a: {"high": 0, "medium": 1, "low": 2}[a["level"]])
+dump("watchlist.json", dict(rules=WCFG["rules"], as_of_analyst=WCFG["as_of_analyst"], btc_ok=btc_ok_now, tickers=watch))
+wsum = dict(entry=[w["ticker"] for w in watch if w["status"] == "Entry"], stage=[w["ticker"] for w in watch if w["status"] == "Stage in"],
+            wait=len([w for w in watch if w["status"] == "Wait"]), exits=[w["ticker"] for w in watch if w["exit_flag"]],
+            btc_ok=btc_ok_now, btc=next((dict(last=w["last"], trigger=w["trigger"], gap=w["pct_to_trigger"]) for w in watch if w["benchmark"]), None),
+            closest=sorted([dict(ticker=w["ticker"], gap=w["pct_to_trigger"]) for w in watch if w["status"] == "Wait" and w["crypto"]], key=lambda z: z["gap"])[:3])
+
 # ---------- calendar: next decision dates and review times ----------
 sgt = dt.timezone(dt.timedelta(hours=8))
 today_sgt = now_utc.astimezone(sgt).date()
@@ -253,7 +330,7 @@ plan_cards = [dict(label=PLAN[m["key"]], market=m["name"], key=m["key"], rule=m[
               for m in markets if m["plan"]]
 
 dump("overview.json", dict(generated=now_utc.isoformat(timespec="minutes"), as_of=max(m["as_of"] for m in markets),
-                           next_decision=str(me), plan=plan_cards, alerts=alerts, markets=overview,
+                           next_decision=str(me), plan=plan_cards, alerts=alerts, markets=overview, watch=wsum,
                            summary=[x for x in B["summary"]], timing=B["timing"]))
 for m in markets:
     dump(f"m_{m['key']}.json", m)

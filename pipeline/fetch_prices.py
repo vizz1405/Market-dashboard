@@ -82,3 +82,18 @@ try:
             print(t["ticker"], "failed", e)
 except Exception as e:
     print("research tickers skipped", e)
+
+# Watchlist (NVDA, SPCX, crypto names and bitcoin): three years of daily closes for the flags and charts
+try:
+    W = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "watchlist.json")))
+    os.makedirs(os.path.join(D, "watch"), exist_ok=True)
+    for t in W["tickers"]:
+        try:
+            s = daily(t["ticker"])
+            s = s[s.index >= s.index[-1] - pd.Timedelta(days=1100)]
+            s.rename("close").rename_axis("date").to_csv(os.path.join(D, "watch", t["ticker"] + ".csv"))
+            print(t["ticker"], len(s), s.index[-1].date())
+        except Exception as e:
+            print(t["ticker"], "failed", e)
+except Exception as e:
+    print("watchlist skipped", e)
