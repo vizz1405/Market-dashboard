@@ -25,12 +25,12 @@ sys.argv = _argv
 
 # name, file, start for backtests, display, region, headline rule, role
 MARKETS = [
-    ("sp500", "S&P 500", "US", "1970-01-01", "Dual: SMA and momentum both negative", "Decides exits for all US holdings (NASDAQ and NYSE stocks)"),
-    ("nasdaq_composite", "NASDAQ Composite", "US", None, "10m SMA (~200 day)", "Watch only. US exits follow the S&P 500 rule"),
-    ("nyse_composite", "NYSE Composite", "US", None, "10m SMA (~200 day)", "Watch only. US exits follow the S&P 500 rule"),
-    ("sti", "Straits Times Index", "SG", None, "10m SMA (~200 day)", "Decides exits for SGX holdings"),
-    ("shanghai_composite", "Shanghai Composite", "CN", None, "10m SMA (~200 day)", "Decides exits for China A holdings (SSE and SZSE)"),
-    ("shenzhen_component", "Shenzhen Component", "CN", None, "10m SMA (~200 day)", "Watch only. China exits follow the Shanghai rule"),
+    ("sp500", "S&P 500", "US", "1970-01-01", "Dual: SMA and momentum both negative", "Decides when to sell all US holdings (NASDAQ and NYSE stocks)"),
+    ("nasdaq_composite", "NASDAQ Composite", "US", None, "10m SMA (~200 day)", "Watch only. US sells follow the S&P 500 rule"),
+    ("nyse_composite", "NYSE Composite", "US", None, "10m SMA (~200 day)", "Watch only. US sells follow the S&P 500 rule"),
+    ("sti", "Straits Times Index", "SG", None, "10m SMA (~200 day)", "Decides when to sell SGX holdings"),
+    ("shanghai_composite", "Shanghai Composite", "CN", None, "10m SMA (~200 day)", "Decides when to sell China A holdings (SSE and SZSE)"),
+    ("shenzhen_component", "Shenzhen Component", "CN", None, "10m SMA (~200 day)", "Watch only. China sells follow the Shanghai rule"),
     ("es3_spdr_sti_etf", "SPDR STI ETF (ES3)", "SG", None, "10m SMA (~200 day)", "Watch only. Tradable STI fund, includes dividends"),
 ]
 PLAN = {"sp500": "US", "sti": "SGX", "shanghai_composite": "China A"}
@@ -175,15 +175,15 @@ for key, name, region, start, head, role in MARKETS:
     else:
         tk.append(f"In a bear phase since {since}, {pct(cur['change_since_turn_pct'] / 100, 0)} from that peak. "
                   f"It is {cur['from_extreme_pct']:+.1f}% from its {mon(cur['extreme_date'])} low; a 20% bounce off the low ends it.")
-    sig_word = "invested" if hl_now else "in cash"
+    sig_word = "hold" if hl_now else "sell, stay in cash"
     if lvl and np.isfinite(lvl):
         side = "above" if last > lvl else "below"
-        act = "move to cash" if hl_now else "go back in"
-        tk.append(f"The {SHORT[head].lower()} rule reads {sig_word} on the latest close ({fmt(last)}), {abs(gap) * 100:.1f}% {side} "
+        act = "sell to cash" if hl_now else "buy back in"
+        tk.append(f"The {SHORT[head].lower()} rule says {sig_word} on the latest close ({fmt(last)}), {abs(gap) * 100:.1f}% {side} "
                   f"the {fmt(lvl)} line. It decides at the {month_end.strftime('%d %b')} close: below that line means {act}."
                   if hl_now else
-                  f"The {SHORT[head].lower()} rule reads {sig_word} on the latest close ({fmt(last)}), {abs(gap) * 100:.1f}% {side} "
-                  f"the {fmt(lvl)} line. A {month_end.strftime('%d %b')} close above it means go back in.")
+                  f"The {SHORT[head].lower()} rule says {sig_word} on the latest close ({fmt(last)}), {abs(gap) * 100:.1f}% {side} "
+                  f"the {fmt(lvl)} line. A {month_end.strftime('%d %b')} close above it means buy back in.")
     d10 = cs["stats"]["10%"]
     tk.append(f"Now {abs(cs['current_dd_from_1y_high']) * 100:.1f}% below its 1-year high. Since {res['from'][:4] if key != 'sp500' else '1928'}, "
               f"{d10['rate'] * 100:.0f}% of 10% dips went on to become 20% bears ({int(d10['became_bear'])} of {d10['episodes']}).")
@@ -195,21 +195,21 @@ for key, name, region, start, head, role in MARKETS:
     tk.append(f"Since {res['from'][:4]}, the {SHORT[head].lower()} rule returned {hl['cagr'] * 100:.1f}% a year with a worst fall of "
               f"{hl['maxdd'] * 100:.0f}%, against {bh['cagr'] * 100:.1f}% and {bh['maxdd'] * 100:.0f}% for buy and hold, "
               f"trading about {hl['trades_per_decade']:.0f} times a decade.")
-    headline = (f"{'Invested' if hl_now else 'Cash'}: {abs(gap) * 100:.1f}% {'above' if last > lvl else 'below'} the line"
-                if lvl and np.isfinite(lvl) else ("Invested" if hl_now else "Cash"))
+    headline = (f"{'Hold' if hl_now else 'Sell'}: {abs(gap) * 100:.1f}% {'above' if last > lvl else 'below'} the line"
+                if lvl and np.isfinite(lvl) else ("Hold" if hl_now else "Sell"))
 
     # ---------- alerts ----------
     lab = PLAN.get(key)
     sev_of = lambda g: "high" if g < 0.02 else "medium" if g < 0.05 else None
     if lab and lvl and np.isfinite(lvl):
         if hl_now != prev_sig:
-            alerts.append(dict(level="high", market=name, title=f"{lab} rule {'turned IN' if hl_now else 'turned OUT'} on the latest close",
+            alerts.append(dict(level="high", market=name, title=f"{lab} rule {'says BUY BACK' if hl_now else 'says SELL'} on the latest close",
                                body=(f"Provisional until the {month_end.strftime('%d %b')} close. " if partial else "") +
-                                    (f"If it holds, sell {lab} holdings and keep SGD cash until it flips back." if not hl_now else
-                                     f"If it holds, {lab} holdings can be held again.")))
+                                    (f"If it holds at month end, sell {lab} holdings and keep SGD cash until it says buy again." if not hl_now else
+                                     f"If it holds at month end, you can buy {lab} holdings again.")))
         sv = sev_of(abs(gap))
         if sv:
-            alerts.append(dict(level=sv, market=name, title=f"{lab} rule is {abs(gap) * 100:.1f}% from flipping",
+            alerts.append(dict(level=sv, market=name, title=f"{lab} rule is {abs(gap) * 100:.1f}% from a {'sell' if hl_now else 'buy'} signal",
                                body=f"{name} closed {fmt(last)}; the line for the {month_end.strftime('%d %b')} close is {fmt(lvl)}."))
     if cur["phase"] == "Bull" and cur.get("to_bear_line_pct") is not None and abs(cur["to_bear_line_pct"]) < 5:
         alerts.append(dict(level="medium", market=name, title=f"{name} is {abs(cur['to_bear_line_pct']):.1f}% from a 20% bear",
@@ -295,20 +295,20 @@ for cfg in WCFG["tickers"]:
     if cfg["benchmark"]:
         if btc_ok_now != btc_ok_prev:
             alerts.append(dict(level="high", market="Bitcoin", title=f"Bitcoin crossed {'above' if btc_ok_now else 'below'} its 200-day average",
-                               body="Crypto names " + ("can now flag entries." if btc_ok_now else "go back to waiting.")))
+                               body="Crypto names " + ("can now flag buys." if btc_ok_now else "go back to waiting.")))
         continue
     if st["status"] == "Entry" and prev["status"] != "Entry":
-        alerts.append(dict(level="high", market=cfg["name"], title=f"{cfg['ticker']} hit a good entry",
+        alerts.append(dict(level="high", market=cfg["name"], title=f"{cfg['ticker']} is a buy",
                            body=f"Closed {fmt(st['last'])}, above its {st['trigger_basis']} of {fmt(st['trigger'])}."))
     if st["status"] != "Entry" and prev["status"] == "Entry":
-        alerts.append(dict(level="medium", market=cfg["name"], title=f"{cfg['ticker']} dropped out of its entry",
+        alerts.append(dict(level="medium", market=cfg["name"], title=f"{cfg['ticker']} is no longer a buy",
                            body=f"Closed {fmt(st['last'])}, below its {st['trigger_basis']} of {fmt(st['trigger'])}."))
     if st["exit_flag"] and not prev["exit_flag"]:
-        alerts.append(dict(level="high", market=cfg["name"], title=f"{cfg['ticker']} exit signal",
-                           body="Its month-end close fell below the 10-month average. Sell if you hold it."))
+        alerts.append(dict(level="high", market=cfg["name"], title=f"{cfg['ticker']} sell signal",
+                           body="Its month-end close fell below the 10-month average. Sell it if you hold it."))
     if st["trim_flag"] and not prev["trim_flag"]:
-        alerts.append(dict(level="medium", market=cfg["name"], title=f"{cfg['ticker']} is over 40% above its average",
-                           body="Trim level from the watchlist rules. Consider taking some profit if you hold it."))
+        alerts.append(dict(level="medium", market=cfg["name"], title=f"{cfg['ticker']} hit a take-profit level",
+                           body="More than 40% above its average. If you hold it, consider selling part."))
 alerts.sort(key=lambda a: {"high": 0, "medium": 1, "low": 2}[a["level"]])
 dump("watchlist.json", dict(rules=WCFG["rules"], as_of_analyst=WCFG["as_of_analyst"], btc_ok=btc_ok_now, tickers=watch))
 wsum = dict(entry=[w["ticker"] for w in watch if w["status"] == "Entry"], stage=[w["ticker"] for w in watch if w["status"] == "Stage in"],

@@ -20,7 +20,7 @@
   const daysTo = (s) => Math.max(0, Math.ceil((new Date(s + "T23:59:59+08:00") - new Date()) / 864e5));
   const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
   const keys = (arr) => `<ul class="keys">${arr.map((t) => `<li>${t}</li>`).join("")}</ul>`;
-  const pill = (sig) => sig ? `<span class="pill in">Invested</span>` : `<span class="pill out">Cash</span>`;
+  const pill = (sig) => sig ? `<span class="pill in">Hold</span>` : `<span class="pill out">Sell</span>`;
   const phaseChip = (p) => `<span class="pill ${p === "Bull" ? "bull" : "bear"}">${p}</span>`;
 
   // ---------- theme ----------
@@ -74,13 +74,13 @@
     let s = `<svg class="svgchart" width="${w}" height="${h}" role="img" aria-label="Price ladder">`;
     s += `<line x1="${L}" x2="${w - R}" y1="${y}" y2="${y}" stroke="var(--line2)" stroke-width="2"/>`;
     s += `<rect x="${X(t.entry[0])}" y="${y - 9}" width="${X(t.entry[1]) - X(t.entry[0])}" height="18" rx="5" fill="color-mix(in srgb, var(--blue) 22%, transparent)"/>`;
-    s += `<text x="${(X(t.entry[0]) + X(t.entry[1])) / 2}" y="${y + 30}" text-anchor="middle" style="fill:var(--blue);font-weight:600">Entry</text>`;
+    s += `<text x="${(X(t.entry[0]) + X(t.entry[1])) / 2}" y="${y + 30}" text-anchor="middle" style="fill:var(--blue);font-weight:600">Buy</text>`;
     t.trims.forEach(([a, b], i) => {
       s += `<rect x="${X(a) - 2}" y="${y - 9}" width="${Math.max(4, X(b) - X(a) + 4)}" height="18" rx="4" fill="color-mix(in srgb, var(--orange2) 30%, transparent)"/>`;
-      s += `<text x="${X((a + b) / 2)}" y="${y + 30}" text-anchor="middle" style="fill:var(--orange);font-weight:600">Trim ${i + 1}</text>`;
+      s += `<text x="${X((a + b) / 2)}" y="${y + 30}" text-anchor="middle" style="fill:var(--orange);font-weight:600">Take profit ${i + 1}</text>`;
     });
     s += `<line x1="${X(t.stop)}" x2="${X(t.stop)}" y1="${y - 14}" y2="${y + 14}" stroke="var(--red2)" stroke-width="3" stroke-linecap="round"/>`;
-    s += `<text x="${X(t.stop)}" y="${y + 30}" text-anchor="middle" style="fill:var(--red);font-weight:600">Stop</text>`;
+    s += `<text x="${X(t.stop)}" y="${y + 30}" text-anchor="middle" style="fill:var(--red);font-weight:600">Sell</text>`;
     const top = [];
     pts.sort((a, b) => a.v - b.v).forEach((p) => {
       let ly = y - 22; while (top.some((q) => Math.abs(q.x - X(p.v)) < (w < 500 ? 84 : 96) && q.y === ly)) ly -= 16;
@@ -157,10 +157,10 @@
     const inC = plan.filter((p) => p.signal), outC = plan.filter((p) => !p.signal);
     const close = plan.filter((p) => p.gap != null && Math.abs(p.gap) < 0.02);
     let lede = "";
-    if (inC.length) lede += `<b>${inC.map((p) => p.label).join(" and ")}</b> ${inC.length > 1 ? "are" : "is"} still invested`;
+    if (inC.length) lede += `<b>${inC.map((p) => p.label).join(" and ")}</b> ${inC.length > 1 ? "say" : "says"} hold`;
     if (inC.length && close.some((c) => c.signal)) lede += `, but only ${pc(Math.abs(close.find((c) => c.signal).gap), 1, false)} above ${close.find((c) => c.signal).label === "US" ? "its" : "the"} line`;
-    if (outC.length) lede += `${inC.length ? ". " : ""}<b>${outC.map((p) => p.label).join(" and ")}</b> ${outC.length > 1 ? "read" : "reads"} cash`;
-    lede += `. Signals lock in at the <b>${dm(o.next_decision)}</b> close, ${daysTo(o.next_decision)} days away. New money still goes in every month.`;
+    if (outC.length) lede += `${inC.length ? ". " : ""}<b>${outC.map((p) => p.label).join(" and ")}</b> ${outC.length > 1 ? "say" : "says"} sell, stay in cash`;
+    lede += `. Buy and sell signals lock in at the <b>${dm(o.next_decision)}</b> close, ${daysTo(o.next_decision)} days away. New money still goes in every month.`;
     const gen = new Date(o.generated);
     let h = `<section class="hero"><p class="eyebrow">Closes to ${dmy(o.as_of)} · updated ${gen.toLocaleString("en-SG", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</p>
       <h1>Today</h1><p class="lede">${lede}</p></section>`;
@@ -170,18 +170,18 @@
         <div class="big num">${nf(p.last)}</div>
         <p class="sub">Line for the ${dm(p.month_end)} close: <b class="num">${nf(p.level)}</b></p>
         ${meter(p.gap, p.signal)}
-        <p class="sub">${p.gap >= 0 ? `${pc(p.gap, 1, false)} above the line.` : `${pc(Math.abs(p.gap), 1, false)} below the line.`} ${p.signal ? (p.gap >= 0 ? "A close under it moves these holdings to cash." : "") : (p.gap < 0 ? "A close over it means hold again." : "")}</p>
+        <p class="sub">${p.gap >= 0 ? `${pc(p.gap, 1, false)} above the line.` : `${pc(Math.abs(p.gap), 1, false)} below the line.`} ${p.signal ? (p.gap >= 0 ? "A close under it means sell to cash." : "") : (p.gap < 0 ? "A close over it means buy back." : "")}</p>
       </a>`).join("") + `</div>`;
     h += `<h2>Alerts</h2><div class="card">` + (o.alerts.length ? o.alerts.map((a) => `<div class="alert ${a.level}"><i></i><div><b>${esc(a.title)}</b><p>${esc(a.body)}</p></div></div>`).join("") : `<p class="sub">Nothing close to a flip.</p>`) + `</div>`;
     if (o.watch) {
       const w = o.watch;
-      h += `<h2>Watchlist</h2><a class="card link" href="#/watch"><div class="card-h"><div><h3>${w.entry.length ? `${w.entry.length} at a good entry` : "Nothing at a good entry yet"}</h3>
+      h += `<h2>Watchlist</h2><a class="card link" href="#/watch"><div class="card-h"><div><h3>${w.entry.length ? `${w.entry.length} to buy now` : "Nothing to buy yet"}</h3>
         <p class="sub">NVIDIA, SpaceX and 16 crypto-linked names</p></div>${w.btc_ok ? `<span class="pill in">Bitcoin above average</span>` : `<span class="pill out">Bitcoin below average</span>`}</div>
         ${keys([
-          w.entry.length ? `Good entry now: <b>${w.entry.join(", ")}</b>.` : `No name is above its entry line today.`,
+          w.entry.length ? `Buy now: <b>${w.entry.join(", ")}</b>.` : `No name is above its buy line today.`,
           w.stage.length ? `Small monthly buys allowed while below the line: <b>${w.stage.join(", ")}</b> (analysts see 25%+ upside).` : "",
-          w.btc ? (w.btc_ok ? `Bitcoin is above its 200-day average, so crypto entries are switched on.` : `Crypto entries wait for bitcoin to clear its 200-day average of <b>$${n0(w.btc.trigger)}</b>, ${pc(w.btc.gap, 0, false)} above today.`) : "",
-          w.closest.length ? `Closest crypto names to an entry: ${w.closest.map((c) => `${c.ticker} (${pc(c.gap, 0, false)} away)`).join(", ")}.` : "",
+          w.btc ? (w.btc_ok ? `Bitcoin is above its 200-day average, so crypto buy signals are switched on.` : `Crypto buys wait for bitcoin to clear its 200-day average of <b>$${n0(w.btc.trigger)}</b>, ${pc(w.btc.gap, 0, false)} above today.`) : "",
+          w.closest.length ? `Closest crypto names to a buy: ${w.closest.map((c) => `${c.ticker} (${pc(c.gap, 0, false)} away)`).join(", ")}.` : "",
         ].filter(Boolean))}</a>`;
     }
     h += `<h2>Markets</h2><div class="grid g4">` + o.markets.map((m) => `
@@ -190,7 +190,7 @@
         <div class="tile-price">${nf(m.last)}</div>
         <div class="tile-meta"><span>${phaseChip(m.phase)}</span><span class="${cls(m.from_high)}">${pc(m.from_high)} from high</span></div>
         ${spark(m.spark, m.spark[m.spark.length - 1] >= m.spark[0])}
-        <div class="tile-meta" style="margin-top:8px"><span>${m.signal ? "Rule: in" : "Rule: cash"}</span><span>${(m.p_up * 100).toFixed(0)}% up in 12m</span></div>
+        <div class="tile-meta" style="margin-top:8px"><span>${m.signal ? "Rule: hold" : "Rule: sell"}</span><span>${(m.p_up * 100).toFixed(0)}% up in 12m</span></div>
       </a>`).join("") + `</div>`;
     const usSum = o.summary.find((s) => s.market === "S&P 500");
     h += `<h2>Key points</h2><div class="card">${keys([
@@ -210,7 +210,7 @@
     regions.forEach(([r, title]) => {
       h += `<h2>${title}</h2><div class="grid g3">` + o.markets.filter((m) => m.region === r).map((m) => `
         <a class="card link" href="#/market/${m.key}">
-          <div class="card-h"><div><h3>${esc(m.name)}</h3><p class="sub">${m.plan ? `Decides ${esc(m.plan)} exits` : "Watch only"}</p></div>${pill(m.signal)}</div>
+          <div class="card-h"><div><h3>${esc(m.name)}</h3><p class="sub">${m.plan ? `Decides when to sell ${esc(m.plan)}` : "Watch only"}</p></div>${pill(m.signal)}</div>
           <div class="tile-price">${nf(m.last)}</div>
           <div class="tile-meta"><span>${phaseChip(m.phase)}</span><span class="${cls(m.from_high)}">${pc(m.from_high)} from 1-year high</span></div>
           ${spark(m.spark, m.spark[m.spark.length - 1] >= m.spark[0])}
@@ -226,7 +226,7 @@
     const bonds = f.funds.filter((x) => x.kind === "Bond");
     h += `<div class="card" style="margin-top:16px">${keys([
       `Bond funds fall far less than shares: the worst drop was ${bonds.map((b) => `${pp(b.worst_drop_pct, 0)} for ${b.fund.match(/\((\w+)\)/)[1]}`).join(" and ")}, against ${pp(f.funds[0].worst_drop_pct, 0)} for the STI fund.`,
-      `They also earn less, about ${bonds.map((b) => pp(b.yearly_return_pct)).join(" and ")} a year. Your exit rule moves to SGD cash, not bonds, so these are an option for savings rather than part of the signal.`,
+      `They also earn less, about ${bonds.map((b) => pp(b.yearly_return_pct)).join(" and ")} a year. Your sell rule moves to SGD cash, not bonds, so these are an option for savings rather than part of the signal.`,
       `No Singapore unit-trust price history is available from Yahoo; POEMS or FSMOne exports would be needed to chart them.`,
     ])}</div>`;
     setTimeout(() => f.funds.forEach((x, i) => {
@@ -245,7 +245,7 @@
     const nc = m.nowcast, cs = m.corrections.stats;
     let h = `<a class="back" href="#/markets">‹ Markets</a>
       <section class="hero"><p class="eyebrow">${esc(m.role)}</p><h1>${esc(m.name)}</h1>
-      <p class="lede"><b>${nf(m.last)}</b> on ${dmy(m.as_of)}. ${ph.phase} phase since ${my(ph.since)}. ${esc(m.head_short)} rule: <b>${m.signal ? "invested" : "cash"}</b>${m.flip_level ? `, line ${nf(m.flip_level)} for the ${dm(m.month_end)} close` : ""}.</p></section>`;
+      <p class="lede"><b>${nf(m.last)}</b> on ${dmy(m.as_of)}. ${ph.phase} phase since ${my(ph.since)}. ${esc(m.head_short)} rule: <b>${m.signal ? "hold" : "sell, stay in cash"}</b>${m.flip_level ? `, line ${nf(m.flip_level)} for the ${dm(m.month_end)} close` : ""}.</p></section>`;
     h += `<div class="card"><h3>Key takeaways</h3>${keys(m.takeaways)}</div>`;
 
     // 1. history
@@ -278,17 +278,17 @@
       ${keys([
         `${esc(head.name)}: <b>${pc(head.cagr)}</b> a year, worst fall <b>${pc(head.maxdd, 0)}</b>, invested ${pc(head.time_in, 0, false)} of the time.`,
         `Buy and hold: <b>${pc(bh.cagr)}</b> a year, worst fall <b>${pc(bh.maxdd, 0)}</b>.`,
-        `About ${head.trades_per_decade.toFixed(0)} exits a decade; ${pc(head.false_exit_rate, 0, false)} of exits were followed by a higher price six months later. The rule pays by dodging deep bears, not by being right often.`,
+        `About ${head.trades_per_decade.toFixed(0)} sells a decade; ${pc(head.false_exit_rate, 0, false)} of sells were followed by a higher price six months later. The rule pays by dodging deep bears, not by being right often.`,
       ])}</div>
-      <div class="card"><h3>All rules compared</h3><p class="sub">Return a year and worst fall. Dot: green = in now, red = cash now.</p>${ruleBars(rules)}
+      <div class="card"><h3>All rules compared</h3><p class="sub">Return a year and worst fall. Dot: green = hold now, red = sell now.</p>${ruleBars(rules)}
       ${keys([
         (() => { const b = [...rules].sort((a, c) => c.cagr - a.cagr)[0]; return `Highest return: ${esc(b.name)} at ${pc(b.cagr)} a year.`; })(),
         (() => { const b = [...rules].sort((a, c) => c.maxdd - a.maxdd)[0]; return `Smallest worst fall: ${esc(b.name)} at ${pc(b.maxdd, 0)}.`; })(),
-        `${rules.filter((r) => r.key !== "Buy and hold" && r.now).length} of ${rules.length - 1} rules read invested now.`,
+        `${rules.filter((r) => r.key !== "Buy and hold" && r.now).length} of ${rules.length - 1} rules say hold now.`,
       ])}</div></div>`;
 
-    h += `<div class="card" style="margin-top:16px"><div class="scroll"><table class="tbl"><thead><tr><th>Rule</th><th>Now</th><th class="r">Per year</th><th class="r">Worst fall</th><th class="r">Invested</th><th class="r">Exits / decade</th><th class="r">Last change</th></tr></thead><tbody>
-      ${rules.map((r) => `<tr class="${r.head ? "hl" : ""}"><td>${esc(r.name)}${r.head ? " ★" : ""}</td><td>${r.key === "Buy and hold" ? "–" : r.now ? '<span class="pos">In</span>' : '<span class="neg">Cash</span>'}</td><td class="r">${pc(r.cagr)}</td><td class="r">${pc(r.maxdd, 0)}</td><td class="r">${pc(r.time_in, 0, false)}</td><td class="r">${r.trades_per_decade.toFixed(1)}</td><td class="r">${r.last_change && r.last_change !== "[]" ? my(r.last_change) : "–"}</td></tr>`).join("")}
+    h += `<div class="card" style="margin-top:16px"><div class="scroll"><table class="tbl"><thead><tr><th>Rule</th><th>Now</th><th class="r">Per year</th><th class="r">Worst fall</th><th class="r">Invested</th><th class="r">Sells / decade</th><th class="r">Last change</th></tr></thead><tbody>
+      ${rules.map((r) => `<tr class="${r.head ? "hl" : ""}"><td>${esc(r.name)}${r.head ? " ★" : ""}</td><td>${r.key === "Buy and hold" ? "–" : r.now ? '<span class="pos">Hold</span>' : '<span class="neg">Sell</span>'}</td><td class="r">${pc(r.cagr)}</td><td class="r">${pc(r.maxdd, 0)}</td><td class="r">${pc(r.time_in, 0, false)}</td><td class="r">${r.trades_per_decade.toFixed(1)}</td><td class="r">${r.last_change && r.last_change !== "[]" ? my(r.last_change) : "–"}</td></tr>`).join("")}
       </tbody></table></div><p class="small muted" style="margin:10px 0 0">★ the rule your plan uses for this market. Month-end closes, trade the next month, no costs or taxes, price index without dividends.</p></div>`;
 
     // 4. forecasts
@@ -311,10 +311,10 @@
 
     // 5. bear capture + phases table
     if (m.bears.length) {
-      h += `<h2>How the rule handled past bears</h2><div class="card"><div class="scroll"><table class="tbl"><thead><tr><th>Bear</th><th class="r">Fall</th><th class="r">Months to exit</th><th class="r">Fall avoided</th><th class="r">Months to re-enter</th></tr></thead><tbody>
+      h += `<h2>How the rule handled past bears</h2><div class="card"><div class="scroll"><table class="tbl"><thead><tr><th>Bear</th><th class="r">Fall</th><th class="r">Months to sell</th><th class="r">Fall avoided</th><th class="r">Months to buy back</th></tr></thead><tbody>
         ${m.bears.slice(-10).reverse().map((b) => `<tr><td>${my(b.peak)} to ${my(b.trough)}</td><td class="r neg">${pc(b.fall, 0)}</td><td class="r">${b.months_to_exit ?? "never"}</td><td class="r">${pc(b.fall_avoided, 0, false)}</td><td class="r">${b.months_to_reenter ?? "–"}</td></tr>`).join("")}
         </tbody></table></div>
-        ${(() => { const v = m.bears.filter((b) => b.months_to_exit != null); const avg = v.reduce((a, b) => a + b.fall_avoided, 0) / (v.length || 1); return keys([`Across ${m.bears.length} monthly bears the ${esc(m.head_short.toLowerCase())} rule avoided about <b>${pc(avg, 0, false)}</b> of the fall on average.`, `It usually exits a few months after the peak and re-enters a few months after the low, so it gives up the top and the first leg back.`]); })()}
+        ${(() => { const v = m.bears.filter((b) => b.months_to_exit != null); const avg = v.reduce((a, b) => a + b.fall_avoided, 0) / (v.length || 1); return keys([`Across ${m.bears.length} monthly bears the ${esc(m.head_short.toLowerCase())} rule avoided about <b>${pc(avg, 0, false)}</b> of the fall on average.`, `It usually sells a few months after the peak and buys back a few months after the low, so it gives up the top and the first leg back.`]); })()}
         </div>`;
     }
     const prow = (p) => `<tr><td>${phaseChip(p.kind)}</td><td>${my(p.start)}</td><td>${my(p.end)}</td><td class="r ${p.change_pct > 0 ? "pos" : "neg"}">${pp(p.change_pct, 0)}</td><td class="r">${p.months}</td></tr>`;
@@ -355,19 +355,19 @@
   async function viewResearch() {
     const [r, st] = await Promise.all([load("research.json"), load("stocks.json")]);
     let h = `<section class="hero"><p class="eyebrow">Written ${dmy(r.written)} · prices update daily</p><h1>Research</h1>
-      <p class="lede">Your December picks through your framework: why each stock is moving, four numbers, fair value and four price scenarios with entry, trim and stop levels.</p></section>`;
+      <p class="lede">Your December picks through your framework: why each stock is moving, four numbers, fair value and four price scenarios with buy, take-profit and sell levels.</p></section>`;
     h += `<div class="grid g3">` + r.tickers.map((t) => {
       const s = st[t.ticker] || {}, last = s.last ?? t.price;
       const inZone = last >= t.entry[0] && last <= t.entry[1], toFair = t.fair_value / last - 1;
       return `<a class="card link" href="#/research/${t.ticker}">
-        <div class="card-h"><div><h3>${esc(t.name)}</h3><p class="sub">${t.ticker} · ${t.exchange}</p></div><span class="chip">${inZone ? "In entry zone" : last < t.entry[0] ? "Below entry zone" : "Above entry zone"}</span></div>
+        <div class="card-h"><div><h3>${esc(t.name)}</h3><p class="sub">${t.ticker} · ${t.exchange}</p></div><span class="chip">${inZone ? "In buy zone" : last < t.entry[0] ? "Below buy zone" : "Above buy zone"}</span></div>
         <div class="tile-price">$${nf(last)}</div>
         <div class="tile-meta"><span class="${cls(s.chg30)}">${s.chg30 != null ? pc(s.chg30) + " in 30 days" : ""}</span><span>Fair ~$${nf(t.fair_value)} (${pc(toFair, 0)})</span></div>
         ${s.c ? spark(s.c.slice(-130), s.c[s.c.length - 1] >= s.c[s.c.length - 130]) : ""}
         <p class="sub" style="margin-top:12px">${esc(t.one_line)}</p></a>`;
     }).join("") + `</div>`;
     h += `<div class="card" style="margin-top:16px">${keys([
-      `All three were inside or near their entry zones when written, after the November AI sell-off.`,
+      `All three were inside or near their buy zones when written, after the November AI sell-off.`,
       `Microsoft looked cheapest against its own history, Yum China cheapest outright, and Amazon the most dependent on one moving part, its Anthropic stake.`,
       esc(r.disclosure), esc(r.note),
     ])}</div>`;
@@ -381,16 +381,16 @@
     const zone = last < t.entry[0] ? "below" : last > t.entry[1] ? "above" : "inside";
     let h = `<a class="back" href="#/research">‹ Research</a>
       <section class="hero"><p class="eyebrow">${t.ticker} · ${t.exchange} · ${esc(t.plan)}</p><h1>${esc(t.name)}</h1>
-      <p class="lede"><b>$${nf(last)}</b>${s.as_of ? ` on ${dmy(s.as_of)}` : ""}, ${zone} the $${t.entry[0]}-${t.entry[1]} entry zone and ${pc(Math.abs(1 - last / t.fair_value), 0, false)} ${last <= t.fair_value ? "below" : "above"} my ~$${nf(t.fair_value)} fair value.</p></section>`;
-    h += `<div class="card"><h3>Price ladder</h3><p class="sub">Where today's price sits against the stop, entry zone, fair value, trims and the four scenarios</p><div id="ladder" style="margin-top:8px"></div>
+      <p class="lede"><b>$${nf(last)}</b>${s.as_of ? ` on ${dmy(s.as_of)}` : ""}, ${zone} the $${t.entry[0]}-${t.entry[1]} buy zone and ${pc(Math.abs(1 - last / t.fair_value), 0, false)} ${last <= t.fair_value ? "below" : "above"} my ~$${nf(t.fair_value)} fair value.</p></section>`;
+    h += `<div class="card"><h3>Price ladder</h3><p class="sub">Where today's price sits against the sell level, buy zone, fair value, take-profit levels and the four scenarios</p><div id="ladder" style="margin-top:8px"></div>
       ${keys([
-        `Entry $${t.entry[0]}-${t.entry[1]}. ${esc(t.entry_text)}`,
-        `Trim: ${esc(t.trim_text)}`,
-        `Hard stop: ${esc(t.stop_text)}`,
-        `Plan rule check: down 25% and below the 200-day average would trigger a replace at about $${nf(Math.round(last * 0.75 * 100) / 100)}.`,
+        `<b>Buy</b> $${t.entry[0]}-${t.entry[1]}. ${esc(t.entry_text)}`,
+        `<b>Take profit:</b> ${esc(t.trim_text)}`,
+        `<b>Sell all if:</b> ${esc(t.stop_text)}`,
+        `Plan rule check: down 25% and below the 200-day average would mean sell and replace at about $${nf(Math.round(last * 0.75 * 100) / 100)}.`,
       ])}</div>`;
     h += `<h2>Last 12 months</h2><div class="card"><div class="chart" id="c-stk"></div>
-      <div class="legend"><span><i class="ln" style="background:var(--blue)"></i>Close</span><span><i class="ln" style="background:var(--orange2)"></i>200-day average</span><span><i style="background:color-mix(in srgb, var(--blue) 22%, transparent)"></i>Entry zone</span><span><i class="ln" style="background:var(--red2)"></i>Stop</span></div>
+      <div class="legend"><span><i class="ln" style="background:var(--blue)"></i>Close</span><span><i class="ln" style="background:var(--orange2)"></i>200-day average</span><span><i style="background:color-mix(in srgb, var(--blue) 22%, transparent)"></i>Buy zone</span><span><i class="ln" style="background:var(--red2)"></i>Sell level</span></div>
       ${s.ma200 ? keys([`The 200-day average is <b>$${nf(s.ma200)}</b>; the price is ${pc(Math.abs(last / s.ma200 - 1), 1, false)} ${last >= s.ma200 ? "above" : "below"} it.`, `30-day move: <b class="${cls(s.chg30)}">${pc(s.chg30)}</b>.`]) : ""}</div>`;
     h += `<h2>Why it has been moving</h2><div class="grid g2"><div class="card why">${t.why.map((w) => `<div><b>${esc(w.label)}</b>${esc(w.text)}</div>`).join("")}</div>
       <div class="card" style="display:flex;align-items:center"><p class="quote">“${esc(t.one_line)}”</p></div></div>`;
@@ -407,7 +407,7 @@
       if (!s.t) return;
       const u = lineChart(document.getElementById("c-stk"), { t: s.t, height: 280,
         bands: [{ from: s.t[0], to: s.t[s.t.length - 1], y0: t.entry[0], y1: t.entry[1], color: "rgba(0,113,227,.13)" }],
-        hlines: [{ y: t.stop, label: `Stop $${nf(t.stop)}`, color: css("--red2") }, { y: t.fair_value, label: `Fair ~$${nf(t.fair_value)}`, color: css("--gray") }],
+        hlines: [{ y: t.stop, label: `Sell $${nf(t.stop)}`, color: css("--red2") }, { y: t.fair_value, label: `Fair ~$${nf(t.fair_value)}`, color: css("--gray") }],
         series: [{ label: "Close", data: s.c, color: css("--blue") }, { label: "200-day avg", data: s.ma, color: css("--orange2"), width: 1.3 }] });
       const v = s.c.concat([t.stop, t.fair_value]); u.setScale("y", { min: Math.min(...v) * 0.96, max: Math.max(...v) * 1.03 });
     });
@@ -428,17 +428,17 @@
   }
 
   // ---------- watchlist ----------
-  const wPill = (w) => w.status === "Entry" ? `<span class="pill in">Good entry</span>` : w.status === "Stage in" ? `<span class="pill stage">Small buys OK</span>`
-    : w.status === "Above" ? `<span class="pill in">Above average</span>` : w.status === "Below" ? `<span class="pill out">Below average</span>` : `<span class="pill wait">Wait</span>`;
+  const wPill = (w) => w.status === "Entry" ? `<span class="pill in">Buy</span>` : w.status === "Stage in" ? `<span class="pill stage">Small buys OK</span>`
+    : w.status === "Above" ? `<span class="pill in">Above average</span>` : w.status === "Below" ? `<span class="pill out">Below average</span>` : `<span class="pill wait">Wait to buy</span>`;
   const gapBar = (g) => { const v = Math.max(0, Math.min(1, 1 - g / 1)); return `<div class="gap"><i style="width:${(v * 100).toFixed(0)}%"></i></div>`; };
   async function viewWatch() {
     const w = await load("watchlist.json");
     const btc = w.tickers.find((t) => t.benchmark), rest = w.tickers.filter((t) => !t.benchmark);
     const entry = rest.filter((t) => t.status === "Entry"), exits = rest.filter((t) => t.exit_flag);
     let h = `<section class="hero"><p class="eyebrow">Closes to ${dmy(rest[0].as_of)} · analyst views as of ${dmy(w.as_of_analyst)}</p><h1>Watchlist</h1>
-      <p class="lede">${entry.length ? `<b>${entry.map((t) => t.ticker).join(", ")}</b> ${entry.length > 1 ? "are" : "is"} at a good entry.` : `<b>Nothing is at a good entry yet.</b>`}
+      <p class="lede">${entry.length ? `<b>${entry.map((t) => t.ticker).join(", ")}</b> ${entry.length > 1 ? "are" : "is"} a buy now.` : `<b>Nothing is a buy yet.</b>`}
       ${btc && !btc.status.startsWith("Above") ? ` Bitcoin is ${pc(1 - btc.last / btc.trigger, 0, false)} below its 200-day average, and crypto names wait until it gets back above.` : ""}</p></section>`;
-    if (btc) h += `<a class="card link" href="#/watch/BTC-USD"><div class="card-h"><div><h3>Bitcoin gate</h3><p class="sub">Crypto entries switch on only while bitcoin is above its 200-day average</p></div>${wPill(btc)}</div>
+    if (btc) h += `<a class="card link" href="#/watch/BTC-USD"><div class="card-h"><div><h3>Bitcoin gate</h3><p class="sub">Crypto buy signals switch on only while bitcoin is above its 200-day average</p></div>${wPill(btc)}</div>
       <div class="grid g2" style="align-items:center"><div><div class="big num">$${n0(btc.last)}</div><p class="sub">Line: <b class="num">$${n0(btc.trigger)}</b> · ${pc(btc.from_high, 0)} from its 1-year high</p>${meter(btc.last / btc.trigger - 1)}</div>
       <div>${spark(btc.c.slice(-250), btc.c[btc.c.length - 1] >= btc.c[btc.c.length - 250])}</div></div></a>`;
     const groups = [["AI and space", rest.filter((t) => !t.crypto)], ["Bitcoin and ether funds", rest.filter((t) => /ETF/.test(t.group))],
@@ -449,15 +449,15 @@
         <div class="wl-n"><b>${t.ticker}</b><span>${esc(t.name)}</span></div>
         <div class="wl-s">${spark(t.c.slice(-130), t.c[t.c.length - 1] >= t.c[Math.max(0, t.c.length - 130)])}</div>
         <div class="wl-p num">$${nf(t.last)}<span class="${cls(t.chg30)}">${pc(t.chg30, 0)} 30d</span></div>
-        <div class="wl-g">${t.status === "Entry" ? `<span class="small pos">Above line</span>` : `<span class="small muted">${pc(t.pct_to_trigger, 0, false)} to entry</span>`}${gapBar(Math.max(0, t.pct_to_trigger))}</div>
-        <div class="wl-f">${wPill(t)}${t.exit_flag ? `<span class="chip">Exit ${my(t.exit_month)}</span>` : ""}${t.trim_flag ? `<span class="chip">Trim</span>` : ""}</div></a>`).join("") + `</div>`;
+        <div class="wl-g">${t.status === "Entry" ? `<span class="small pos">Above buy line</span>` : `<span class="small muted">${pc(t.pct_to_trigger, 0, false)} to buy line</span>`}${gapBar(Math.max(0, t.pct_to_trigger))}</div>
+        <div class="wl-f">${wPill(t)}${t.exit_flag ? `<span class="chip">Sell signal ${my(t.exit_month)}</span>` : ""}${t.trim_flag ? `<span class="chip">Take profit</span>` : ""}</div></a>`).join("") + `</div>`;
     });
     h += `<h2>How the flags work</h2><div class="card">${keys([
-      `<b>Good entry:</b> the daily close is above the 200-day average (50-day for SpaceX, which listed in June). Crypto names also need bitcoin above its own 200-day average.`,
+      `<b>Buy:</b> the daily close is above the 200-day average (50-day for SpaceX, which listed in June). Crypto names also need bitcoin above its own 200-day average.`,
       `<b>Small buys OK:</b> NVIDIA and SpaceX only. Small monthly amounts are fine below the line while analysts see 25% or more upside.`,
-      `<b>Trim:</b> up 30% or more from your cost with analyst upside under 10%, or the price more than 40% above its 200-day average. The dashboard flags the 40% stretch; the cost test needs your buy price.`,
-      `<b>Exit:</b> a month-end close below the 10-month average after being above it, or 25% below your cost.`,
-      exits.length ? `${exits.length} names gave that exit signal at the end of October (${exits.map((t) => t.ticker).join(", ")}). It only matters if you hold them.` : "",
+      `<b>Take profit (sell part):</b> up 30% or more from your cost with analyst upside under 10%, or the price more than 40% above its 200-day average. The dashboard flags the 40% stretch; the profit test needs your buy price.`,
+      `<b>Sell:</b> a month-end close below the 10-month average after being above it, or 25% below your cost.`,
+      exits.length ? `${exits.length} names gave that sell signal at the end of October (${exits.map((t) => t.ticker).join(", ")}). It only matters if you hold them.` : "",
       `POEMS may ask for a knowledge assessment before you can buy bitcoin and ether ETFs such as IBIT.`,
     ].filter(Boolean))}</div>`;
     return h;
@@ -468,22 +468,22 @@
     const above = t.last >= t.trigger, isBtc = t.benchmark, cur = isBtc ? "$" : "$";
     let h = `<a class="back" href="#/watch">‹ Watchlist</a><section class="hero"><p class="eyebrow">${esc(t.group)}${t.crypto ? " · crypto" : ""}</p><h1>${esc(t.name)}</h1>
       <p class="lede"><b>${cur}${nf(t.last)}</b> on ${dmy(t.as_of)}, ${pc(Math.abs(t.last / t.trigger - 1), 1, false)} ${above ? "above" : "below"} its ${esc(t.trigger_basis)} of ${cur}${nf(t.trigger)}.</p></section>`;
-    h += `<div class="card"><div class="card-h"><div><h3>Last 12 months</h3><p class="sub">Daily close with the entry line (${esc(t.trigger_basis)})</p></div>${wPill(t)}</div>
+    h += `<div class="card"><div class="card-h"><div><h3>Last 12 months</h3><p class="sub">Daily close with the buy line (${esc(t.trigger_basis)})</p></div>${wPill(t)}</div>
       <div class="chart" id="c-w"></div>
       <div class="legend"><span><i class="ln" style="background:var(--blue)"></i>Close</span><span><i class="ln" style="background:var(--orange2)"></i>${esc(t.trigger_basis)}</span>${t.ten_month_avg ? `<span><i class="ln" style="background:var(--gray)"></i>10-month average</span>` : ""}</div>
       ${keys([
-        isBtc ? (above ? `Bitcoin is above its 200-day average, so crypto names can flag a good entry.` : `Bitcoin needs to close above <b>$${n0(t.trigger)}</b> (${pc(t.pct_to_trigger, 0, false)} higher) before crypto names can flag an entry.`)
-          : t.status === "Entry" ? `<b>Good entry.</b> The close is above the entry line${t.crypto ? " and bitcoin is above its average" : ""}.`
+        isBtc ? (above ? `Bitcoin is above its 200-day average, so crypto names can flag a buy.` : `Bitcoin needs to close above <b>$${n0(t.trigger)}</b> (${pc(t.pct_to_trigger, 0, false)} higher) before crypto names can flag a buy.`)
+          : t.status === "Entry" ? `<b>Buy.</b> The close is above the buy line${t.crypto ? " and bitcoin is above its average" : ""}.`
           : t.status === "Stage in" ? `Below the line, but analysts see ${t.analyst_upside_pct.toFixed(0)}% upside, so small monthly buys are allowed under the plan.`
-          : `<b>Wait.</b> It needs to rise ${pc(t.pct_to_trigger, 0, false)} to reach the entry line${t.crypto && !w.btc_ok ? ", and bitcoin needs to clear its own average too" : ""}.`,
-        t.ten_month_avg ? `10-month average: <b>${cur}${nf(t.ten_month_avg)}</b>. A month-end close below it after being above is the exit signal.${t.exit_flag ? ` That happened at the end of ${my(t.exit_month)}.` : ""}` : `Too new for a 10-month average; the 50-day line stands in for entries.`,
-        t.trim_flag ? `<b>Trim flag:</b> more than 40% above its average.` : `Trim flag at ${cur}${nf(t.trigger * 1.4)} (40% above the average).`,
+          : `<b>Wait to buy.</b> It needs to rise ${pc(t.pct_to_trigger, 0, false)} to reach the buy line${t.crypto && !w.btc_ok ? ", and bitcoin needs to clear its own average too" : ""}.`,
+        t.ten_month_avg ? `10-month average: <b>${cur}${nf(t.ten_month_avg)}</b>. A month-end close below it after being above is the sell signal.${t.exit_flag ? ` That happened at the end of ${my(t.exit_month)}.` : ""}` : `Too new for a 10-month average; the 50-day line stands in as the buy line.`,
+        t.trim_flag ? `<b>Take profit:</b> more than 40% above its average, so consider selling part.` : `Take-profit level at ${cur}${nf(t.trigger * 1.4)} (40% above the average).`,
         `${pc(t.from_high, 0)} from its 1-year high; ${pc(t.chg30, 0)} over 30 days.`,
         t.analyst_upside_pct != null ? `Analysts' average target was ${t.analyst_upside_pct.toFixed(0)}% above the price on ${dmy(w.as_of_analyst)} (rating ${t.rating.toFixed(1)} on a 1 = strong buy to 5 = sell scale).` : "",
       ].filter(Boolean))}</div>`;
     h += `<p class="small muted" style="margin-top:20px">Educational, not advice. Levels follow the watchlist rules set in the daily review and recompute every morning.</p>`;
     setTimeout(() => {
-      const hl = [{ y: t.trigger, label: `Entry line ${cur}${nf(t.trigger)}`, color: css("--orange2") }];
+      const hl = [{ y: t.trigger, label: `Buy line ${cur}${nf(t.trigger)}`, color: css("--orange2") }];
       if (t.ten_month_avg) hl.push({ y: t.ten_month_avg, label: "10-month avg", color: css("--gray") });
       const u = lineChart(document.getElementById("c-w"), { t: t.t, height: 300, hlines: hl,
         series: [{ label: "Close", data: t.c, color: css("--blue") }, { label: t.trigger_basis, data: t.ma, color: css("--orange2"), width: 1.3 }] });
@@ -497,7 +497,7 @@
     const ym = new Date().toISOString().slice(0, 7);
     let h = `<section class="hero"><p class="eyebrow">${esc(p.budget)}</p><h1>Plan</h1><p class="lede">Buy every month. Let the trend rules decide only when to step aside into SGD cash.</p></section>`;
     h += `<div class="grid g3">${o.plan.map((x) => `<a class="card link" href="#/market/${x.key}"><div class="card-h"><div><h3>${x.label}</h3><p class="sub">${esc(x.market)} · ${esc(x.rule)}</p></div>${pill(x.signal)}</div>
-      <p class="sub">${x.signal ? "Hold. Move to cash if the" : "Stay in cash. Hold again if the"} ${dm(x.month_end)} close is ${x.signal ? "below" : "above"} <b class="num">${nf(x.level)}</b>.</p></a>`).join("")}</div>`;
+      <p class="sub">${x.signal ? "Hold. Sell to cash if the" : "Stay in cash. Buy back if the"} ${dm(x.month_end)} close is ${x.signal ? "below" : "above"} <b class="num">${nf(x.level)}</b>.</p></a>`).join("")}</div>`;
     h += `<h2>Rules</h2><div class="grid g2">${p.rules.map((r) => `<div class="card"><h3>${esc(r.title)}</h3><p class="sub" style="font-size:16px">${esc(r.text)}</p></div>`).join("")}</div>`;
     h += `<h2>Buying rotation</h2><div class="card"><ul class="timeline">${p.rotation.map((r) => `<li class="${r.month === ym ? "now" : ""}"><span class="m">${my(r.month + "-01")}</span><span>${esc(r.buy)}${r.note ? ` <span class="muted">· ${esc(r.note)}</span>` : ""}</span></li>`).join("")}</ul></div>`;
     h += `<h2>Daily routine</h2><div class="card">${keys([
